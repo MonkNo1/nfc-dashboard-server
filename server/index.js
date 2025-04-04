@@ -35,7 +35,6 @@ mongoose.connect(process.env.MONGO_URI, {
 
 // API route: Create a new user profile
 app.post('/api/profiles', async (req, res) => {
-  console.log("Request body:", req.body);
   console.log("🔥 POST /api/profiles hit");
   try {
     const profile = new UserProfile(req.body);
@@ -66,4 +65,24 @@ app.get('/', (req, res) => {
 // Start the server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+});
+
+
+app.post('/api/appointments', async (req, res) => {
+  console.log("🔥 POST /api/appointments hit");
+  try {
+    const { name, email, date, time } = req.body;
+
+    if (!name || !email || !date || !time) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
+    // Optionally: Store in DB (future enhancement)
+    console.log("📅 Appointment:", { name, email, date, time });
+
+    res.status(201).json({ message: "Appointment received", appointment: { name, email, date, time } });
+  } catch (err) {
+    console.error("❌ Error saving appointment:", err.message);
+    res.status(500).json({ error: "Server error" });
+  }
 });
