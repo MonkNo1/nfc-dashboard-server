@@ -1,0 +1,16 @@
+### Create a new profile
+POST http://localhost:5000/api/profiles
+Content-Type: application/json
+
+{
+  "username": "vignesh",
+  "fullName": "Adithya Vignesh",
+  "title": "Founder",
+  "company": "NFC Pro Cards",
+  "email": "you@email.com",
+  "phone": "9876543210",
+  "website": "https://yourportfolio.com",
+  "linkedin": "https://linkedin.com/in/you",
+  "instagram": "@you",
+  "x": "@you"
+}
