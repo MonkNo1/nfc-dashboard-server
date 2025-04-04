@@ -33,6 +33,20 @@ mongoose.connect(process.env.MONGO_URI, {
 .then(() => console.log("✅ MongoDB connected"))
 .catch((err) => console.error("❌ MongoDB connection error:", err.message));
 
+/* 
+  Define the Appointment Schema and Model BEFORE using it in endpoints.
+  Use the imported 'mongoose' instead of re-importing.
+*/
+const AppointmentSchema = new mongoose.Schema({
+  username: String, // Link to user
+  name: String,
+  email: String,
+  date: String,
+  time: String
+}, { timestamps: true });
+
+const Appointment = mongoose.model("Appointment", AppointmentSchema);
+
 // API route: Create a new user profile
 app.post('/api/profiles', async (req, res) => {
   console.log("Request body:", req.body);
@@ -58,30 +72,7 @@ app.get('/u/:username', async (req, res) => {
   }
 });
 
-// Root route for quick testing
-app.get('/', (req, res) => {
-  res.send('API is working');
-});
-
-// Start the server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
-
-
-// ✅ Appointment Schema with username
-const mongoose = require('mongoose');
-const AppointmentSchema = new mongoose.Schema({
-  username: String, // Link to user
-  name: String,
-  email: String,
-  date: String,
-  time: String
-}, { timestamps: true });
-
-const Appointment = mongoose.model("Appointment", AppointmentSchema);
-
-// ✅ POST /api/appointments
+// API route: Create a new appointment
 app.post('/api/appointments', async (req, res) => {
   console.log("🔥 POST /api/appointments hit");
   try {
@@ -99,4 +90,14 @@ app.post('/api/appointments', async (req, res) => {
     console.error("❌ Error saving appointment:", err.message);
     res.status(500).json({ error: "Server error" });
   }
+});
+
+// Root route for quick testing
+app.get('/', (req, res) => {
+  res.send('API is working');
+});
+
+// Start the server
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
