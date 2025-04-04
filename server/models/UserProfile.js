@@ -15,4 +15,5 @@ const UserProfileSchema = new mongoose.Schema({
   upi: String,
 }, { timestamps: true });
 
-module.exports = mongoose.model('UserProfile', UserProfileSchema);
+const UserProfile = mongoose.model('UserProfile', UserProfileSchema);
+export default UserProfile;
