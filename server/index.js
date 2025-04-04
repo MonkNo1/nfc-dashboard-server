@@ -35,6 +35,7 @@ mongoose.connect(process.env.MONGO_URI, {
 
 // API route: Create a new user profile
 app.post('/api/profiles', async (req, res) => {
+  console.log("Request body:", req.body);
   console.log("🔥 POST /api/profiles hit");
   try {
     const profile = new UserProfile(req.body);
