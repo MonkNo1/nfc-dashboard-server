@@ -1,17 +1,18 @@
-import mongoose from "mongoose";
+const mongoose = require('mongoose');
 
 const UserProfileSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
-  fullName: String,
+  name: String,
   title: String,
-  company: String,
-  phone: String,
+  subtitle: String,
+  avatar: String,
   email: String,
-  website: String,
-  linkedin: String,
   instagram: String,
-  x: String,
-  profileImage: String
+  linkedin: String,
+  twitter: String,
+  website: String,
+  location: String,
+  upi: String,
 }, { timestamps: true });
 
-export default mongoose.model("UserProfile", UserProfileSchema);
+module.exports = mongoose.model('UserProfile', UserProfileSchema);
