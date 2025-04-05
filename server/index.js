@@ -42,19 +42,36 @@ mongoose.connect(process.env.MONGO_URI, {
   Use the imported 'mongoose' instead of re-importing.
 */
 
-// API route: Create a new user profile
-app.post('/api/profiles', async (req, res) => {
-  console.log("Request body:", req.body);
-  console.log("🔥 POST /api/profiles hit");
+app.post("/api/profiles", async (req, res) => {
   try {
-    const profile = new UserProfile(req.body);
-    await profile.save();
-    res.status(201).json(profile);
+    const { username, deviceId, ...rest } = req.body;
+    let profile = await UserProfile.findOne({ username });
+
+    if (!profile) {
+      // First time – assign ownerDeviceId
+      profile = await UserProfile.create({
+        username,
+        ownerDeviceId: deviceId,
+        ...rest,
+      });
+    } else {
+      // Check if device is the owner
+      if (profile.ownerDeviceId && profile.ownerDeviceId !== deviceId) {
+        return res.status(403).json({ error: "You are not the owner of this profile." });
+      }
+
+      // Update allowed
+      profile.set({ ...rest });
+      await profile.save();
+    }
+
+    res.status(200).json(profile);
   } catch (err) {
-    console.error("❌ Error saving profile:", err.message);
-    res.status(400).json({ error: err.message });
+    console.error("Profile save error:", err);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
+
 
 // API route: Get user profile by username
 app.get('/u/:username', async (req, res) => {
