@@ -13,8 +13,6 @@ const UserProfileSchema = new mongoose.Schema({
   website: String,
   location: String,
   upi: String,
-
-  // ✅ NEW: store the owning device
   ownerDeviceId: { type: String, default: "" }
 }, { timestamps: true });
 

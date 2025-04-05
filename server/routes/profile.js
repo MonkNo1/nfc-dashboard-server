@@ -44,4 +44,44 @@ router.post('/:id', async (req, res) => {
   }
 });
 
+// routes/profile.js
+router.post('/set-owner', async (req, res) => {
+    const { username, deviceId } = req.body;  // Device ID sent from the frontend
+  
+    try {
+      let userProfile = await UserProfile.findOne({ username });
+  
+      if (!userProfile) {
+        return res.status(404).json({ message: 'User profile not found' });
+      }
+  
+      // Check if there is already an owner set
+      if (!userProfile.ownerDeviceId) {
+        // If there's no owner, set the current device as the owner
+        userProfile.ownerDeviceId = deviceId;
+        await userProfile.save();
+      }
+  
+      res.status(200).json({ ownerDeviceId: userProfile.ownerDeviceId });
+    } catch (error) {
+      res.status(500).json({ message: "Error setting owner device", error });
+    }
+  });
+  
+  router.get('/:username', async (req, res) => {
+    const { username } = req.params;
+    
+    try {
+      const userProfile = await UserProfile.findOne({ username });
+  
+      if (!userProfile) {
+        return res.status(404).json({ message: 'User profile not found' });
+      }
+  
+      res.json(userProfile);
+    } catch (error) {
+      res.status(500).json({ message: 'Error fetching user profile', error });
+    }
+  });
+  
 export default router;
