@@ -7,7 +7,7 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import UserProfile from './models/UserProfile.js';
-import Appointment from './models/appointment.js';
+import Appointment from './models/Appointment.js';
 
 // Load environment variables from the .env file
 dotenv.config();
