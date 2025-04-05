@@ -7,6 +7,7 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import UserProfile from './models/UserProfile.js';
+import Appointment from './models/appointment.js';
 
 // Load environment variables from the .env file
 dotenv.config();
@@ -37,15 +38,6 @@ mongoose.connect(process.env.MONGO_URI, {
   Define the Appointment Schema and Model BEFORE using it in endpoints.
   Use the imported 'mongoose' instead of re-importing.
 */
-const AppointmentSchema = new mongoose.Schema({
-  username: String, // Link to user
-  name: String,
-  email: String,
-  date: String,
-  time: String
-}, { timestamps: true });
-
-const Appointment = mongoose.model("Appointment", AppointmentSchema);
 
 // API route: Create a new user profile
 app.post('/api/profiles', async (req, res) => {
