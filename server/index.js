@@ -21,6 +21,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+import profileRoutes from './routes/profile.js';
+app.use('/api/profile', profileRoutes);
+
 const PORT = process.env.PORT || 5000;
 
 console.log("Connecting to MongoDB:", process.env.MONGO_URI);
