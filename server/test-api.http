@@ -1,16 +1,53 @@
-### Create a new profile
+### ✅ 1. Create or update profile as owner device
 POST http://localhost:5000/api/profiles
 Content-Type: application/json
 
 {
   "username": "vignesh",
-  "fullName": "Adithya Vignesh",
+  "deviceId": "device-1234-OWNER",
+  "name": "Adithya Vignesh",
   "title": "Founder",
-  "company": "NFC Pro Cards",
-  "email": "you@email.com",
-  "phone": "9876543210",
+  "subtitle": "Building NFC Pro Cards",
+  "email": "vignesh@example.com",
   "website": "https://yourportfolio.com",
   "linkedin": "https://linkedin.com/in/you",
   "instagram": "@you",
-  "x": "@you"
+  "twitter": "@you"
 }
+
+
+### 🚫 2. Attempt to edit profile from non-owner device
+POST http://localhost:5000/api/profiles
+Content-Type: application/json
+
+{
+  "username": "vignesh",
+  "deviceId": "device-5678-NOTOWNER",
+  "name": "Hacker"
+}
+
+
+### 📅 3. Create a new appointment (status: pending)
+POST http://localhost:5000/api/appointments
+Content-Type: application/json
+
+{
+  "username": "vignesh",
+  "name": "Client A",
+  "email": "client@example.com",
+  "date": "2025-04-07",
+  "time": "15:30"
+}
+
+
+### 🟢 4. Approve an appointment (replace ID with real MongoDB ID)
+PATCH http://localhost:5000/api/appointments/<REPLACE_WITH_APPOINTMENT_ID>/approve
+Content-Type: application/json
+
+{
+  "ownerResponse": "See you then!"
+}
+
+
+### 📋 5. Get all appointments for a profile owner
+GET http://localhost:5000/api/appointments/vignesh
