@@ -1,59 +1,51 @@
 // server/routes/profile.js
 import express from 'express';
+import mongoose from 'mongoose';
 import UserProfile from '../models/UserProfile.js';
 
 const router = express.Router();
 
-// GET /api/profiles/:username
-router.get('/:username', async (req, res) => {
-  const { username } = req.params;
+// GET /api/profile/:id (by MongoDB _id)
+router.get('/:id', async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ error: 'Invalid ID format' });
+  }
 
   try {
-    const profile = await UserProfile.findOne({ username });
-    if (!profile) {
-      return res.status(404).json({ error: 'Profile not found' });
-    }
-    res.status(200).json(profile);
+    const profile = await UserProfile.findById(id);
+    if (!profile) return res.status(404).json({ error: 'Profile not found' });
+    res.json(profile);
   } catch (err) {
-    console.error("GET profile error:", err);
+    console.error("GET profile error:", err.message);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-// POST /api/profiles
-router.post('/', async (req, res) => {
+// POST /api/profile/:id (update profile if device is owner)
+router.post('/:id', async (req, res) => {
+  const { id } = req.params;
+  const { deviceId, ...updateData } = req.body;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ error: 'Invalid ID format' });
+  }
+
   try {
-    const { username, deviceId, ...rest } = req.body;
+    const profile = await UserProfile.findById(id);
+    if (!profile) return res.status(404).json({ error: 'Profile not found' });
 
-    if (!username) {
-      return res.status(400).json({ error: 'Username is required' });
-    }
-    if (!deviceId) {
-      return res.status(400).json({ error: 'Device ID is required' });
-    }
-
-    let profile = await UserProfile.findOne({ username });
-
-    if (!profile) {
-      // First-time creation: assign ownership to the current device.
-      profile = await UserProfile.create({
-        username,
-        ownerDeviceId: deviceId,
-        ...rest,
-      });
-    } else {
-      // Only allow updates from the original owner device.
-      if (profile.ownerDeviceId && profile.ownerDeviceId !== deviceId) {
-        return res.status(403).json({ error: 'You are not the owner of this profile.' });
-      }
-
-      profile.set({ ...rest });
-      await profile.save();
+    // Check device ownership
+    if (profile.ownerDeviceId && profile.ownerDeviceId !== deviceId) {
+      return res.status(403).json({ error: 'You are not the owner of this profile.' });
     }
 
-    res.status(200).json(profile);
+    Object.assign(profile, updateData);
+    await profile.save();
+    res.json(profile);
   } catch (err) {
-    console.error("POST profile error:", err);
+    console.error("POST profile error:", err.message);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
