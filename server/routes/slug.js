@@ -5,7 +5,7 @@ import UserProfile from '../models/UserProfile.js';
 
 const router = express.Router();
 
-// Generate a random 16-character slug (8 bytes → 16 hex characters)
+// Utility to generate a random 16-character slug (8 bytes → 16 hex characters)
 const generateRandomSlug = () => crypto.randomBytes(8).toString('hex').toLowerCase();
 
 router.post('/', async (req, res) => {
@@ -13,6 +13,7 @@ router.post('/', async (req, res) => {
     let slug;
     let attempts = 0;
     const maxAttempts = 10;
+    const baseUrl = process.env.BASE_URL || 'https://nfc-dashboard-five.vercel.app';
 
     // Retry until a unique slug is found
     while (attempts < maxAttempts) {
@@ -23,6 +24,7 @@ router.post('/', async (req, res) => {
     }
 
     if (attempts === maxAttempts) {
+      console.error(`Failed to generate unique slug after ${maxAttempts} attempts.`);
       return res.status(500).json({ error: 'Failed to generate a unique slug. Please try again later.' });
     }
 
@@ -33,19 +35,22 @@ router.post('/', async (req, res) => {
       ownerDeviceId: "" // will be claimed on first access
     });
 
-    await profile.save();
-
-    // Optionally use an environment variable for the base URL
-    const baseUrl = process.env.BASE_URL || 'https://nfc-dashboard-five.vercel.app';
+    try {
+      await profile.save();
+    } catch (error) {
+      if (error.code === 11000) {
+        console.warn(`Slug collision at save time: ${slug}`);
+        return res.status(409).json({ error: 'Slug already exists. Please try again.' });
+      }
+      console.error("Error saving slug profile:", error.message);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
 
     return res.status(201).json({
       slug,
       link: `${baseUrl}/p/${slug}`
     });
   } catch (error) {
-    if (error.code === 11000) {
-      return res.status(409).json({ error: 'Slug already exists. Please try again.' });
-    }
     console.error("Slug generation error:", error.message);
     return res.status(500).json({ error: 'Internal server error' });
   }
