@@ -1,31 +1,33 @@
-// index.js
-
 import dns from 'dns';
 dns.setDefaultResultOrder('ipv4first');
-
-import slugRoutes from './routes/slug.js';
-app.use('/api/slugs', slugRoutes);
 
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import UserProfile from './models/UserProfile.js';
-import Appointment from './models/Appointment.js';
-import profileRoutes from './routes/profile.js';
-import appointmentRoutes from './routes/Appointment.js';
 
 dotenv.config();
 
-const app = express();
+// Models
+import './models/UserProfile.js';
+import './models/Appointment.js';
+
+// Routes (import AFTER app is defined)
+import profileRoutes from './routes/profile.js';
+import appointmentRoutes from './routes/Appointment.js';
+import slugRoutes from './routes/slug.js'; // <-- include this now
+
+const app = express(); // ✅ Initialize here first
 const PORT = process.env.PORT || 5000;
 
+// Middleware
 app.use(cors());
 app.use(express.json());
 
+// Debug log
 console.log("Using MONGO_URI:", process.env.MONGO_URI);
-console.log("Connecting to MongoDB...");
 
+// DB connection
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -34,16 +36,17 @@ mongoose.connect(process.env.MONGO_URI, {
 .then(() => console.log("✅ MongoDB connected"))
 .catch(err => console.error("❌ MongoDB connection error:", err.message));
 
-// Mount API routes
+// ✅ Register routes AFTER app is defined
 app.use('/api/profiles', profileRoutes);
 app.use('/api/appointments', appointmentRoutes);
+app.use('/api/slugs', slugRoutes); // ✅ Slug endpoint
 
-// Root endpoint
+// Health check
 app.get('/', (req, res) => {
-  res.send('API is working');
+  res.send('🚀 API is working');
 });
 
-// Corrected template literal using backticks
+// Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
