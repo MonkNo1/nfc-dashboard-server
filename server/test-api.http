@@ -3,7 +3,7 @@ POST http://localhost:5000/api/profiles
 Content-Type: application/json
 
 {
-  "username": "vignesh",
+  "slug": "vignesh",
   "deviceId": "device-1234-OWNER",
   "name": "Adithya Vignesh",
   "title": "Founder",
@@ -21,7 +21,7 @@ POST http://localhost:5000/api/profiles
 Content-Type: application/json
 
 {
-  "username": "vignesh",
+  "slug": "vignesh",
   "deviceId": "device-5678-NOTOWNER",
   "name": "Hacker"
 }
@@ -32,7 +32,7 @@ POST http://localhost:5000/api/appointments
 Content-Type: application/json
 
 {
-  "username": "vignesh",
+  "slug": "vignesh",
   "name": "Client A",
   "email": "client@example.com",
   "date": "2025-04-07",
