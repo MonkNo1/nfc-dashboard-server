@@ -1,37 +1,50 @@
+// routes/slug.js
 import express from 'express';
-import UserProfile from '../models/UserProfile.js';
 import crypto from 'crypto';
+import UserProfile from '../models/UserProfile.js';
 
 const router = express.Router();
 
-// Utility to generate a random 6-10 character slug
-const generateRandomSlug = () => {
-  return crypto.randomBytes(6).toString('hex'); // 12-char slug
-};
+// Utility to generate a random 10-character hex slug
+const generateRandomSlug = () => crypto.randomBytes(5).toString('hex');
 
-// POST /api/slugs -> returns a unique slug + profile link
+// POST /api/slugs → generate a new unique slug + blank profile
 router.post('/', async (req, res) => {
-  let slug;
-  let tries = 0;
+  try {
+    let slug;
+    let attempts = 0;
 
-  // Retry if slug already exists
-  do {
-    slug = generateRandomSlug();
-    const exists = await UserProfile.findOne({ slug });
-    if (!exists) break;
-    tries++;
-  } while (tries < 5);
+    // Retry up to 5 times to find a unique slug
+    do {
+      slug = generateRandomSlug();
+      const exists = await UserProfile.findOne({ slug });
+      if (!exists) break;
+      attempts++;
+    } while (attempts < 5);
 
-  if (tries === 5) return res.status(500).json({ error: 'Failed to generate a unique slug' });
+    if (attempts === 5) {
+      console.error("Failed to generate unique slug after 5 tries.");
+      return res.status(500).json({ error: "Unable to generate a unique slug." });
+    }
 
-  // Create a new empty profile with slug only
-  const profile = new UserProfile({ slug });
-  await profile.save();
+    // Create blank profile with slug
+    const profile = new UserProfile({
+      slug,
+      username: "",
+      ownerDeviceId: "" // Claimed on first visit
+    });
 
-  return res.json({
-    slug,
-    link: `https://nfc-dashboard-five.vercel.app/p/${slug}`
-  });
+    await profile.save();
+
+    return res.status(201).json({
+      slug,
+      link: `https://nfc-dashboard-five.vercel.app/p/${slug}`
+    });
+
+  } catch (error) {
+    console.error("Slug generation error:", error.message);
+    return res.status(500).json({ error: "Internal server error." });
+  }
 });
 
 export default router;
