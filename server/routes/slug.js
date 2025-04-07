@@ -1,36 +1,37 @@
-// server/routes/slug.js
 import express from 'express';
 import UserProfile from '../models/UserProfile.js';
-import { nanoid } from 'nanoid';
+import crypto from 'crypto';
 
 const router = express.Router();
 
-// POST /api/generate-slug
-// This endpoint creates a new profile with a custom slug and returns the link.
+// Utility to generate a random 6-10 character slug
+const generateRandomSlug = () => {
+  return crypto.randomBytes(6).toString('hex'); // 12-char slug
+};
+
+// POST /api/slugs -> returns a unique slug + profile link
 router.post('/', async (req, res) => {
-  try {
-    const { name } = req.body;
-    if (!name) return res.status(400).json({ error: 'Name is required' });
+  let slug;
+  let tries = 0;
 
-    // Generate a slug based on the name and a random nanoid suffix
-    const slugBase = name.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 15);
-    const slug = `${slugBase}-${nanoid(5)}`;
+  // Retry if slug already exists
+  do {
+    slug = generateRandomSlug();
+    const exists = await UserProfile.findOne({ slug });
+    if (!exists) break;
+    tries++;
+  } while (tries < 5);
 
-    // Create new profile. Initially, ownerDeviceId is empty.
-    const newProfile = await UserProfile.create({
-      slug,
-      username: slug, // You can default username to slug if desired.
-      name,
-      ownerDeviceId: "", // Will be set on first visit.
-    });
+  if (tries === 5) return res.status(500).json({ error: 'Failed to generate a unique slug' });
 
-    // Construct full URL using FRONTEND_BASE_URL from env variables.
-    const fullLink = `${process.env.FRONTEND_BASE_URL}/p/${slug}`;
-    res.status(201).json({ link: fullLink, slug });
-  } catch (err) {
-    console.error("Slug creation error:", err.message);
-    res.status(500).json({ error: 'Server error' });
-  }
+  // Create a new empty profile with slug only
+  const profile = new UserProfile({ slug });
+  await profile.save();
+
+  return res.json({
+    slug,
+    link: `https://nfc-dashboard-five.vercel.app/p/${slug}`
+  });
 });
 
 export default router;
