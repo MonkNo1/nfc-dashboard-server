@@ -31,8 +31,8 @@ router.post('/', async (req, res) => {
     // Create new profile with only the slug set
     const profile = new UserProfile({
       slug,
-      username: "", // default empty
-      ownerDeviceId: "" // will be claimed on first access
+      username: null, // default empty
+      ownerDeviceId: null // will be claimed on first access
     });
 
     try {
