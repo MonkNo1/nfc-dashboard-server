@@ -10,7 +10,7 @@ const AppointmentSchema = new mongoose.Schema({
     required: true,
     match: [/.+@.+\..+/, 'Please enter a valid email address.']
   },
-  date: { type: String, required: true },     // Consider changing to a Date field for combined date & time
+  date: { type: Date, required: true },       // Changed to Date type
   time: { type: String, required: true },
   status: { type: String, default: 'pending' }, // "pending" or "confirmed"
   ownerResponse: { type: String, default: '' }  // Optional: approval note/message

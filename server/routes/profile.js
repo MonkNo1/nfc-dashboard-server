@@ -40,6 +40,14 @@ router.post('/slug/:slug', async (req, res) => {
       return res.status(403).json({ error: 'You are not the owner of this profile.' });
     }
 
+    // Validate updateData fields
+    const allowedFields = ['name', 'title', 'subtitle', 'email', 'website', 'linkedin', 'instagram', 'twitter'];
+    Object.keys(updateData).forEach((key) => {
+      if (!allowedFields.includes(key)) {
+        delete updateData[key];
+      }
+    });
+
     Object.assign(profile, updateData);
     await profile.save();
     res.json(profile);

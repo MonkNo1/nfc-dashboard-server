@@ -1,4 +1,4 @@
-  import dns from 'dns';
+import dns from 'dns';
   dns.setDefaultResultOrder('ipv4first');
 
   import express from 'express';
@@ -26,6 +26,7 @@
 
   // Debug log
   console.log("Using MONGO_URI:", process.env.MONGO_URI);
+  console.log("Using FRONTEND_BASE_URL:", process.env.FRONTEND_BASE_URL || "Not set");
 
   // DB connection
   mongoose.connect(process.env.MONGO_URI, {

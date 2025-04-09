@@ -5,14 +5,17 @@ const UserProfileSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true,
-    trim: true
+    trim: true,
+    minlength: 16, // Ensure slug length
+    maxlength: 16
   },
 
   username: {
     type: String,
     trim: true,
     unique: true,
-    sparse: true  // Allows it to be optional and non-conflicting
+    sparse: true,  // Allows it to be optional and non-conflicting
+    match: [/^[a-zA-Z0-9_-]+$/, "Username can only contain alphanumeric characters, dashes, and underscores."]
   },
 
   name: { type: String, default: "" },
