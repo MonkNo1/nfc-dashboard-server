@@ -8,8 +8,8 @@ const router = express.Router();
 // Utility to generate a random 16-character slug (8 bytes → 16 hex characters)
 const generateRandomSlug = () => crypto.randomBytes(8).toString('hex').toLowerCase();
 
-// Create a new profile with unique slug
-router.post('/', async (req, res) => {
+// Create a new profile with unique slug only when creating a dashboard
+router.post('/create-dashboard', async (req, res) => {
   try {
     let slug;
     let attempts = 0;
@@ -43,7 +43,7 @@ router.post('/', async (req, res) => {
       slug,
       email: req.user.email, // Use the authenticated user's email
       isOwner: true, // Set ownership to true since this is a new profile
-      username: null, // default empty
+      username: req.body.username || null, // Allow user to set a username
       ownerDeviceId: null // will be claimed on first access
     });
 
