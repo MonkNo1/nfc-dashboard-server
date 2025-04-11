@@ -36,9 +36,15 @@ app.use((req, res, next) => {
 
 // CORS configuration
 const corsOptions = {
-  origin: process.env.FRONTEND_BASE_URL || '*',
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  origin: process.env.NODE_ENV === 'production'
+    ? [
+        'https://nfc-dashboard-five.vercel.app',
+        process.env.FRONTEND_BASE_URL
+      ].filter(Boolean)
+    : '*',
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'admin-token'],
+  credentials: true
 };
 
 // Middleware
