@@ -1,31 +1,43 @@
-// models/Appointment.js
-
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
 const AppointmentSchema = new mongoose.Schema({
-  username: { type: String, required: true }, // Profile owner receiving request
-  name: { type: String, required: true },     // Person requesting appointment
-  email: { 
+  name: {
+    type: String,
+    required: [true, 'Name is required'],
+    trim: true
+  },
+  email: {
+    type: String,
+    required: [true, 'Email is required'],
+    match: [
+      /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
+      'Please add a valid email'
+    ]
+  },
+  date: {
+    type: String,
+    required: [true, 'Date is required']
+  },
+  time: {
+    type: String,
+    required: [true, 'Time is required']
+  },
+  username: {
     type: String, 
-    required: true,
-    match: [/.+@.+\..+/, 'Please enter a valid email address.']
+    required: [true, 'Username is required']
   },
-  date: { 
-    type: Date, 
-    required: true,
-    validate: {
-      validator: (value) => value >= new Date(),
-      message: 'Appointment date must be in the future.'
-    }
+  profileName: {
+    type: String
   },
-  time: { 
-    type: String, 
-    required: true,
-    match: [/^\d{2}:\d{2}$/, 'Time must be in HH:mm format.']
+  status: {
+    type: String,
+    enum: ['pending', 'confirmed', 'canceled'],
+    default: 'pending'
   },
-  status: { type: String, default: 'pending' }, // "pending" or "confirmed"
-  ownerResponse: { type: String, default: '' }  // Optional: approval note/message
-}, { timestamps: true });
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
+});
 
-const Appointment = mongoose.model('Appointment', AppointmentSchema);
-export default Appointment;
+module.exports = mongoose.model('Appointment', AppointmentSchema); 
