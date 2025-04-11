@@ -24,7 +24,7 @@ router.post('/', async (req, res) => {
       if (slug.length !== 16) { // Ensure slug length is correct
         console.error("Generated slug has incorrect length.");
         attempts++;
-        continue; // Increment attempts and continue
+        continue;
       }
       
       // Check if slug already exists
@@ -38,9 +38,11 @@ router.post('/', async (req, res) => {
       return res.status(500).json({ error: 'Failed to generate a unique slug. Please try again later.' });
     }
 
-    // Create new profile with only the slug set
+    // Create new profile with the authenticated user's email
     const profile = new UserProfile({
       slug,
+      email: req.user.email, // Use the authenticated user's email
+      isOwner: true, // Set ownership to true since this is a new profile
       username: null, // default empty
       ownerDeviceId: null // will be claimed on first access
     });
@@ -79,6 +81,11 @@ router.get('/:slug', async (req, res) => {
     const profile = await UserProfile.findOne({ slug });
     if (!profile) {
       return res.status(404).json({ error: 'Profile not found' });
+    }
+
+    // If user is authenticated, check if they are the owner
+    if (req.user && req.user.email === profile.email) {
+      profile.isOwner = true;
     }
     
     res.json(profile);

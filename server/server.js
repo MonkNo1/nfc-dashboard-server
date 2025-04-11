@@ -6,6 +6,7 @@ import session from 'express-session';
 import passport from './config/google-auth.js';
 import connectDB from './config/db.js';
 import errorHandler from './middleware/error.js';
+import { verifyGoogleToken } from './middleware/auth.js';
 
 // Load environment variables
 dotenv.config();
@@ -16,9 +17,18 @@ connectDB();
 // Initialize Express app
 const app = express();
 
+// CORS configuration
+app.use(cors({
+  origin: ['https://nfc-dashboard-five.vercel.app', 'http://localhost:3000'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+
 // Middleware
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(morgan('dev'));
 
 // Session configuration
 app.use(session({
@@ -35,41 +45,13 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Use morgan logger only in development
-if (process.env.NODE_ENV === 'development') {
-  app.use(morgan('dev'));
-}
-
-// CORS configuration
-const corsOptions = {
-  origin: process.env.NODE_ENV === 'production' 
-    ? [
-        'https://nfc-dashboard.onrender.com', 
-        'https://nfc-dashboard-frontend.onrender.com',
-        'https://nfc-dashboard-five.vercel.app',
-        'http://localhost:3000'
-      ] 
-    : '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
-};
-
-app.use(cors(corsOptions));
-
-// Add security headers
-app.use((req, res, next) => {
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('X-Frame-Options', 'DENY');
-  next();
-});
-
 // Define API Routes
 app.use('/api/profile', import('./routes/profile.js'));
-app.use('/api/slugs', import('./routes/slugs.js'));
 app.use('/api/appointments', import('./routes/appointments.js'));
 app.use('/api/auth', import('./routes/auth.js'));
+
+// Protected routes that require Google authentication
+app.use('/api/slugs', verifyGoogleToken, import('./routes/slug.js'));
 
 // Home route
 app.get('/', (req, res) => {
