@@ -1,5 +1,8 @@
 // nfc-dashboard-server/server/routes/auth.js
-const express = require('express');
+import express from 'express';
+import passport from 'passport';
+import UserProfile from '../models/UserProfile.js';
+
 const router = express.Router();
 
 /**
@@ -74,4 +77,61 @@ router.get('/verify', (req, res) => {
   }
 });
 
-module.exports = router;
+// Google OAuth routes
+router.get('/google',
+  passport.authenticate('google', { scope: ['profile', 'email'] })
+);
+
+router.get('/google/callback',
+  passport.authenticate('google', { 
+    failureRedirect: '/login',
+    successRedirect: '/dashboard'
+  })
+);
+
+// Get current user
+router.get('/me', (req, res) => {
+  if (req.user) {
+    res.json({
+      isAuthenticated: true,
+      user: req.user
+    });
+  } else {
+    res.json({
+      isAuthenticated: false,
+      user: null
+    });
+  }
+});
+
+// Logout
+router.post('/logout', (req, res) => {
+  req.logout((err) => {
+    if (err) {
+      return res.status(500).json({ error: 'Error logging out' });
+    }
+    res.json({ message: 'Logged out successfully' });
+  });
+});
+
+// Check if user can edit profile
+router.get('/can-edit/:profileId', async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.json({ canEdit: false });
+    }
+
+    const profile = await UserProfile.findById(req.params.profileId);
+    if (!profile) {
+      return res.status(404).json({ error: 'Profile not found' });
+    }
+
+    // User can edit if they are the owner
+    const canEdit = profile.googleId === req.user.googleId;
+    res.json({ canEdit });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+export default router;

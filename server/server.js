@@ -1,10 +1,11 @@
-const express = require('express');
-const dotenv = require('dotenv');
-const morgan = require('morgan');
-const cors = require('cors');
-const path = require('path');
-const connectDB = require('./config/db');
-const errorHandler = require('./middleware/error');
+import express from 'express';
+import dotenv from 'dotenv';
+import morgan from 'morgan';
+import cors from 'cors';
+import session from 'express-session';
+import passport from './config/google-auth.js';
+import connectDB from './config/db.js';
+import errorHandler from './middleware/error.js';
 
 // Load environment variables
 dotenv.config();
@@ -16,8 +17,23 @@ connectDB();
 const app = express();
 
 // Middleware
-app.use(express.json({ limit: '50mb' })); // For handling large image uploads
+app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Session configuration
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'your-secret-key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
+
+// Initialize Passport
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Use morgan logger only in development
 if (process.env.NODE_ENV === 'development') {
@@ -28,16 +44,14 @@ if (process.env.NODE_ENV === 'development') {
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
     ? [
-        // Add your frontend URL when deployed
         'https://nfc-dashboard.onrender.com', 
         'https://nfc-dashboard-frontend.onrender.com',
         'https://nfc-dashboard-five.vercel.app',
-        // Keep localhost for development
         'http://localhost:3000'
       ] 
     : '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'admin-token'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 };
 
@@ -52,10 +66,10 @@ app.use((req, res, next) => {
 });
 
 // Define API Routes
-app.use('/api/profile', require('./routes/profile'));
-app.use('/api/slugs', require('./routes/slugs'));
-app.use('/api/appointments', require('./routes/appointments'));
-app.use('/api/auth', require('./routes/auth'));
+app.use('/api/profile', import('./routes/profile.js'));
+app.use('/api/slugs', import('./routes/slugs.js'));
+app.use('/api/appointments', import('./routes/appointments.js'));
+app.use('/api/auth', import('./routes/auth.js'));
 
 // Home route
 app.get('/', (req, res) => {

@@ -18,6 +18,17 @@ const UserProfileSchema = new mongoose.Schema({
     match: [/^[a-zA-Z0-9_-]+$/, "Username can only contain alphanumeric characters, dashes, and underscores."]
   },
 
+  googleId: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
+
+  isOwner: {
+    type: Boolean,
+    default: false
+  },
+
   name: { type: String, default: "" },
   title: { type: String, default: "" },
   subtitle: { type: String, default: "" },
