@@ -1,0 +1,136 @@
+import express, { Request, Response } from 'express';
+import passport from 'passport';
+import UserProfile from '../models/UserProfile.js';
+
+const router = express.Router();
+
+/**
+ * @route   POST /api/auth/admin
+ * @desc    Admin login
+ * @access  Public
+ */
+router.post('/admin', (req: Request, res: Response) => {
+  try {
+    const { password } = req.body;
+    
+    // Log attempt details without exposing the actual password
+    console.log(`Admin login attempt - Password provided: ${password ? 'Yes' : 'No'}`);
+    console.log(`Expected password from env: ${process.env.ADMIN_PASSWORD ? 'Configured' : 'Missing'}`);
+
+    if (!password) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Please provide a password' 
+      });
+    }
+
+    // Strict equality check
+    if (password === process.env.ADMIN_PASSWORD) {
+      console.log('Admin login successful');
+      return res.status(200).json({ 
+        success: true, 
+        token: process.env.ADMIN_TOKEN 
+      });
+    }
+
+    console.log('Admin login failed - Invalid password');
+    return res.status(401).json({ 
+      success: false, 
+      message: 'Invalid credentials' 
+    });
+  } catch (err) {
+    console.error('Admin login error:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error' 
+    });
+  }
+});
+
+/**
+ * @route   GET /api/auth/verify
+ * @desc    Verify admin token
+ * @access  Public
+ */
+router.get('/verify', (req: Request, res: Response) => {
+  try {
+    const token = req.headers['admin-token'] as string;
+    
+    if (token === process.env.ADMIN_TOKEN) {
+      return res.status(200).json({ 
+        success: true, 
+        isValid: true 
+      });
+    }
+    
+    return res.status(200).json({ 
+      success: true, 
+      isValid: false 
+    });
+  } catch (err) {
+    console.error('Token verification error:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error' 
+    });
+  }
+});
+
+// Google OAuth routes
+router.get('/google',
+  passport.authenticate('google', { scope: ['profile', 'email'] })
+);
+
+router.get('/google/callback',
+  passport.authenticate('google', { 
+    failureRedirect: '/login',
+    successRedirect: '/dashboard'
+  })
+);
+
+// Get current user
+router.get('/me', (req: Request, res: Response) => {
+  if (req.user) {
+    res.json({
+      isAuthenticated: true,
+      user: req.user
+    });
+  } else {
+    res.json({
+      isAuthenticated: false,
+      user: null
+    });
+  }
+});
+
+// Logout
+router.post('/logout', (req: Request, res: Response) => {
+  req.logout((err) => {
+    if (err) {
+      return res.status(500).json({ error: 'Error logging out' });
+    }
+    res.json({ message: 'Logged out successfully' });
+  });
+});
+
+// Check if user can edit profile
+router.get('/can-edit/:profileId', async (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.json({ canEdit: false });
+    }
+
+    const profile = await UserProfile.findById(req.params.profileId);
+    if (!profile) {
+      return res.status(404).json({ error: 'Profile not found' });
+    }
+
+    // User can edit if they are the owner
+    const canEdit = profile.googleId === req.user.googleId;
+    res.json({ canEdit });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+export default router; 
