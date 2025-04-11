@@ -9,6 +9,10 @@ const router = express.Router();
 router.post('/slug/:slug/claim', async (req, res) => {
     const { slug } = req.params;
     const { deviceId } = req.body;
+
+    if (!deviceId) {
+      return res.status(400).json({ error: 'Device ID is required to claim a profile.' });
+    }
   
     try {
       const profile = await UserProfile.findOne({ slug });
@@ -30,6 +34,10 @@ router.post('/slug/:slug/claim', async (req, res) => {
 router.post('/slug/:slug', async (req, res) => {
   const { slug } = req.params;
   const { deviceId, ...updateData } = req.body;
+
+  if (!deviceId) {
+    return res.status(400).json({ error: 'Device ID is required to update the profile.' });
+  }
 
   try {
     const profile = await UserProfile.findOne({ slug });

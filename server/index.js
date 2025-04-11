@@ -40,7 +40,7 @@ import dns from 'dns';
   // ✅ Register routes AFTER app is defined
   app.use('/api/profile', profileRoutes);
   app.use('/api/appointments', appointmentRoutes);
-  app.use('/api/slugs', slugRoutes); // ✅ Slug endpoint
+  app.use('/api/profiles', slugRoutes); // Corrected route prefix
 
   // Health check
   app.get('/', (req, res) => {

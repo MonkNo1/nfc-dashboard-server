@@ -10,8 +10,19 @@ const AppointmentSchema = new mongoose.Schema({
     required: true,
     match: [/.+@.+\..+/, 'Please enter a valid email address.']
   },
-  date: { type: Date, required: true },       // Changed to Date type
-  time: { type: String, required: true },
+  date: { 
+    type: Date, 
+    required: true,
+    validate: {
+      validator: (value) => value >= new Date(),
+      message: 'Appointment date must be in the future.'
+    }
+  },
+  time: { 
+    type: String, 
+    required: true,
+    match: [/^\d{2}:\d{2}$/, 'Time must be in HH:mm format.']
+  },
   status: { type: String, default: 'pending' }, // "pending" or "confirmed"
   ownerResponse: { type: String, default: '' }  // Optional: approval note/message
 }, { timestamps: true });

@@ -20,7 +20,8 @@ router.post('/', async (req, res) => {
       slug = generateRandomSlug();
       if (slug.length !== 16) { // Ensure slug length is correct
         console.error("Generated slug has incorrect length.");
-        continue;
+        attempts++;
+        continue; // Increment attempts and continue
       }
       const existing = await UserProfile.findOne({ slug });
       if (!existing) break;

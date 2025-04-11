@@ -38,7 +38,8 @@ const UserProfileSchema = new mongoose.Schema({
 
   ownerDeviceId: {
     type: String,
-    default: null  // This will be set on first tap
+    default: null,  // This will be set on first tap
+    unique: true // Ensure device ID is unique
   }
 }, {
   timestamps: true

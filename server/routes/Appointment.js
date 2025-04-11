@@ -13,11 +13,18 @@ router.post('/', async (req, res) => {
     }
 
     // Validate date and time format
-    if (isNaN(Date.parse(date))) {
-      return res.status(400).json({ error: "Invalid date format" });
+    const parsedDate = new Date(date);
+    if (isNaN(parsedDate.getTime()) || parsedDate < new Date()) {
+      return res.status(400).json({ error: "Invalid or past date provided." });
     }
     if (!/^\d{2}:\d{2}$/.test(time)) {
-      return res.status(400).json({ error: "Invalid time format (HH:mm expected)" });
+      return res.status(400).json({ error: "Invalid time format (HH:mm expected)." });
+    }
+
+    // Check for duplicate appointments
+    const existingAppt = await Appointment.findOne({ username, date, time });
+    if (existingAppt) {
+      return res.status(409).json({ error: "An appointment already exists for this time slot." });
     }
 
     const appt = new Appointment({

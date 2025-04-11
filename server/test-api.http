@@ -1,9 +1,8 @@
 ### ✅ 1. Create or update profile as owner device
-POST http://localhost:5000/api/profiles
+POST http://localhost:5000/api/profiles/slug/vignesh
 Content-Type: application/json
 
 {
-  "slug": "vignesh",
   "deviceId": "device-1234-OWNER",
   "username": "vignesh", // Fixed field name
   "name": "Adithya Vignesh",
@@ -17,11 +16,10 @@ Content-Type: application/json
 }
 
 ### 🚫 2. Attempt to edit profile from non-owner device
-POST http://localhost:5000/api/profiles
+POST http://localhost:5000/api/profiles/slug/vignesh
 Content-Type: application/json
 
 {
-  "slug": "vignesh",
   "deviceId": "device-5678-NOTOWNER",
   "username": "hacker" // Fixed field name
 }
