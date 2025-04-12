@@ -6,13 +6,13 @@ const {
   updateProfile,
   deleteProfile,
   claimProfile,
-  getUserProfiles
-} = require('../controllers/profile');
+  getUserProfiles,
+  getClaimedProfiles
+} = require('../../controllers/v1/profiles');
 
-const router = express.Router({ mergeParams: true });
+const router = express.Router();
 
-// Protect all routes
-const { protect } = require('../middleware/auth');
+const { protect, authorize } = require('../../middleware/auth');
 
 router
   .route('/')
@@ -27,10 +27,14 @@ router
 
 router
   .route('/:id/claim')
-  .post(protect, claimProfile);
+  .put(protect, claimProfile);
 
 router
   .route('/user/:userId')
   .get(protect, getUserProfiles);
+
+router
+  .route('/claimed')
+  .get(protect, getClaimedProfiles);
 
 module.exports = router; 

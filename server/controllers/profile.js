@@ -1,221 +1,161 @@
 const Profile = require('../models/Profile');
-const Slug = require('../models/Slug');
+const User = require('../models/User');
+const ErrorResponse = require('../utils/errorResponse');
+const asyncHandler = require('../middleware/async');
 
-// @desc    Create or update a profile
-// @route   POST /api/profile
+// @desc    Get all profiles
+// @route   GET /api/v1/profiles
 // @access  Public
-exports.createProfile = async (req, res, next) => {
-  try {
-    const { username, deviceId, ...profileData } = req.body;
+exports.getProfiles = asyncHandler(async (req, res, next) => {
+  res.status(200).json(res.advancedResults);
+});
 
-    if (!username || !deviceId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Username and deviceId are required'
-      });
-    }
-
-    // Check if profile already exists
-    let profile = await Profile.findOne({ username });
-
-    if (profile) {
-      // Only allow updates if deviceId matches
-      if (profile.ownerDeviceId !== deviceId) {
-        return res.status(403).json({
-          success: false,
-          message: 'Not authorized to update this profile'
-        });
-      }
-
-      // Update profile
-      profile = await Profile.findOneAndUpdate(
-        { username },
-        { ...profileData },
-        { new: true, runValidators: true }
-      );
-    } else {
-      // Create new profile
-      profile = await Profile.create({
-        username,
-        ownerDeviceId: deviceId,
-        ...profileData
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      data: profile
-    });
-  } catch (err) {
-    next(err);
-  }
-};
-
-// @desc    Get profile by username
-// @route   GET /api/profile/:username
+// @desc    Get single profile
+// @route   GET /api/v1/profiles/:id
 // @access  Public
-exports.getProfile = async (req, res, next) => {
-  try {
-    const profile = await Profile.findOne({ username: req.params.username });
+exports.getProfile = asyncHandler(async (req, res, next) => {
+  const profile = await Profile.findById(req.params.id).populate({
+    path: 'user',
+    select: 'name email'
+  });
 
-    if (!profile) {
-      return res.status(404).json({
-        success: false,
-        message: 'Profile not found'
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      data: profile
-    });
-  } catch (err) {
-    next(err);
+  if (!profile) {
+    return next(new ErrorResponse(`Profile not found with id of ${req.params.id}`, 404));
   }
-};
 
-// @desc    Get profile by slug
-// @route   GET /api/profile/slug/:slug
-// @access  Public
-exports.getProfileBySlug = async (req, res, next) => {
-  try {
-    const slug = await Slug.findOne({ 
-      slug: req.params.slug,
-      isActive: true
-    });
+  res.status(200).json({
+    success: true,
+    data: profile
+  });
+});
 
-    if (!slug) {
-      return res.status(404).json({
-        success: false,
-        message: 'Slug not found or inactive'
-      });
-    }
+// @desc    Create new profile
+// @route   POST /api/v1/profiles
+// @access  Private
+exports.createProfile = asyncHandler(async (req, res, next) => {
+  // Add user to req.body
+  req.body.user = req.user.id;
 
-    let profile;
-    
-    if (slug.profileId) {
-      // If slug is already linked to a profile
-      profile = await Profile.findById(slug.profileId);
-    } else {
-      // Create a new profile with this slug
-      profile = await Profile.create({
-        username: `user_${Date.now()}`,
-        name: 'New User',
-        slug: req.params.slug,
-        ownerDeviceId: ''  // Empty initially, will be claimed
-      });
-      
-      // Link the slug to the new profile
-      slug.profileId = profile._id;
-      await slug.save();
-    }
+  // Check for existing profile
+  const existingProfile = await Profile.findOne({ user: req.user.id });
 
-    if (!profile) {
-      return res.status(404).json({
-        success: false,
-        message: 'Profile not found'
-      });
-    }
-
-    res.status(200).json(profile);
-  } catch (err) {
-    next(err);
+  if (existingProfile) {
+    return next(new ErrorResponse(`User ${req.user.id} already has a profile`, 400));
   }
-};
 
-// @desc    Update profile by slug
-// @route   POST /api/profile/slug/:slug
-// @access  Public (with device ownership check)
-exports.updateProfileBySlug = async (req, res, next) => {
-  try {
-    const { deviceId, ...profileData } = req.body;
-    
-    if (!deviceId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Device ID is required'
-      });
-    }
-    
-    // Find the profile by slug
-    let profile = await Profile.findOne({ slug: req.params.slug });
-    
-    if (!profile) {
-      return res.status(404).json({
-        success: false,
-        message: 'Profile not found'
-      });
-    }
-    
-    // Check ownership
-    if (profile.ownerDeviceId && profile.ownerDeviceId !== deviceId) {
-      return res.status(403).json({
-        success: false,
-        message: 'Not authorized to update this profile'
-      });
-    }
-    
-    // Update profile
-    profile = await Profile.findOneAndUpdate(
-      { slug: req.params.slug },
-      profileData,
-      { new: true, runValidators: true }
+  const profile = await Profile.create(req.body);
+
+  res.status(201).json({
+    success: true,
+    data: profile
+  });
+});
+
+// @desc    Update profile
+// @route   PUT /api/v1/profiles/:id
+// @access  Private
+exports.updateProfile = asyncHandler(async (req, res, next) => {
+  let profile = await Profile.findById(req.params.id);
+
+  if (!profile) {
+    return next(new ErrorResponse(`Profile not found with id of ${req.params.id}`, 404));
+  }
+
+  // Make sure user is profile owner
+  if (profile.user.toString() !== req.user.id && req.user.role !== 'admin') {
+    return next(
+      new ErrorResponse(
+        `User ${req.user.id} is not authorized to update this profile`,
+        401
+      )
     );
-    
-    res.status(200).json(profile);
-  } catch (err) {
-    next(err);
   }
-};
 
-// @desc    Claim ownership of a profile by slug
-// @route   POST /api/profile/slug/:slug/claim
-// @access  Public
-exports.claimProfileBySlug = async (req, res, next) => {
-  try {
-    const { deviceId } = req.body;
-    
-    if (!deviceId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Device ID is required'
-      });
-    }
-    
-    // Find the profile by slug
-    let profile = await Profile.findOne({ slug: req.params.slug });
-    
-    if (!profile) {
-      return res.status(404).json({
-        success: false,
-        message: 'Profile not found'
-      });
-    }
-    
-    // Check if already owned
-    if (profile.ownerDeviceId && profile.ownerDeviceId !== '') {
-      // Already claimed, only update if current device is the owner
-      if (profile.ownerDeviceId !== deviceId) {
-        return res.status(403).json({
-          success: false,
-          message: 'This profile has already been claimed'
-        });
-      }
-    } else {
-      // Set ownership
-      profile = await Profile.findOneAndUpdate(
-        { slug: req.params.slug },
-        { ownerDeviceId: deviceId },
-        { new: true }
-      );
-    }
-    
-    res.status(200).json({
-      success: true,
-      message: 'Profile claimed successfully',
-      data: profile
-    });
-  } catch (err) {
-    next(err);
+  profile = await Profile.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true
+  });
+
+  res.status(200).json({
+    success: true,
+    data: profile
+  });
+});
+
+// @desc    Delete profile
+// @route   DELETE /api/v1/profiles/:id
+// @access  Private
+exports.deleteProfile = asyncHandler(async (req, res, next) => {
+  const profile = await Profile.findById(req.params.id);
+
+  if (!profile) {
+    return next(new ErrorResponse(`Profile not found with id of ${req.params.id}`, 404));
   }
-}; 
+
+  // Make sure user is profile owner
+  if (profile.user.toString() !== req.user.id && req.user.role !== 'admin') {
+    return next(
+      new ErrorResponse(
+        `User ${req.user.id} is not authorized to delete this profile`,
+        401
+      )
+    );
+  }
+
+  await profile.remove();
+
+  res.status(200).json({
+    success: true,
+    data: {}
+  });
+});
+
+// @desc    Claim profile
+// @route   PUT /api/v1/profiles/:id/claim
+// @access  Private
+exports.claimProfile = asyncHandler(async (req, res, next) => {
+  const profile = await Profile.findById(req.params.id);
+
+  if (!profile) {
+    return next(new ErrorResponse(`Profile not found with id of ${req.params.id}`, 404));
+  }
+
+  if (profile.isClaimed) {
+    return next(new ErrorResponse(`Profile is already claimed`, 400));
+  }
+
+  profile.isClaimed = true;
+  profile.claimedBy = req.user.id;
+  await profile.save();
+
+  res.status(200).json({
+    success: true,
+    data: profile
+  });
+});
+
+// @desc    Get user profiles
+// @route   GET /api/v1/profiles/user/:userId
+// @access  Private
+exports.getUserProfiles = asyncHandler(async (req, res, next) => {
+  const profiles = await Profile.find({ user: req.params.userId });
+
+  res.status(200).json({
+    success: true,
+    count: profiles.length,
+    data: profiles
+  });
+});
+
+// @desc    Get claimed profiles
+// @route   GET /api/v1/profiles/claimed
+// @access  Private
+exports.getClaimedProfiles = asyncHandler(async (req, res, next) => {
+  const profiles = await Profile.find({ claimedBy: req.user.id });
+
+  res.status(200).json({
+    success: true,
+    count: profiles.length,
+    data: profiles
+  });
+}); 
