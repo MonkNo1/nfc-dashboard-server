@@ -1,5 +1,5 @@
-const express = require('express');
-const {
+import express from 'express';
+import {
   getProfiles,
   getProfile,
   createProfile,
@@ -7,12 +7,11 @@ const {
   deleteProfile,
   claimProfile,
   getUserProfiles
-} = require('../controllers/profile');
+} from '../controllers/profile.js';
+
+import { protect } from '../middleware/auth.js';
 
 const router = express.Router({ mergeParams: true });
-
-// Protect all routes
-const { protect } = require('../middleware/auth');
 
 router
   .route('/')
@@ -33,4 +32,4 @@ router
   .route('/user/:userId')
   .get(protect, getUserProfiles);
 
-module.exports = router; 
+export default router; 

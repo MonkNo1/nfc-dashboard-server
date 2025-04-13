@@ -1,10 +1,10 @@
-const { nanoid } = require('nanoid');
-const Slug = require('../models/Slug');
+import { nanoid } from 'nanoid';
+import Slug from '../models/Slug.js';
 
 // @desc    Generate a new unique slug
 // @route   POST /api/slugs
 // @access  Public (ideally restricted to admin in production)
-exports.generateSlug = async (req, res, next) => {
+export const generateSlug = async (req, res, next) => {
   try {
     // Create a short, unique slug (5 characters)
     const slug = nanoid(5);
@@ -42,7 +42,7 @@ exports.generateSlug = async (req, res, next) => {
 // @desc    Check if a slug is valid and active
 // @route   GET /api/slugs/:slug
 // @access  Public
-exports.checkSlug = async (req, res, next) => {
+export const checkSlug = async (req, res, next) => {
   try {
     const slug = await Slug.findOne({ 
       slug: req.params.slug,
@@ -68,7 +68,7 @@ exports.checkSlug = async (req, res, next) => {
 // @desc    Deactivate a slug
 // @route   DELETE /api/slugs/:slug
 // @access  Admin
-exports.deactivateSlug = async (req, res, next) => {
+export const deactivateSlug = async (req, res, next) => {
   try {
     const slug = await Slug.findOne({ slug: req.params.slug });
     

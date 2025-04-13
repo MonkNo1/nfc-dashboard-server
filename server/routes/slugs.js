@@ -1,10 +1,10 @@
-const express = require('express');
-const {
+import express from 'express';
+import {
   generateSlug,
   checkSlug,
   deactivateSlug
-} = require('../controllers/slugs');
-const { adminAuth } = require('../middleware/auth');
+} from '../controllers/slugs.js';
+import { adminAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -15,4 +15,4 @@ router.get('/:slug', checkSlug);
 // Admin protected routes
 router.delete('/:slug', adminAuth, deactivateSlug);
 
-module.exports = router;
+export default router;

@@ -1,11 +1,11 @@
-const Profile = require('../../models/Profile');
-const ErrorResponse = require('../../utils/errorResponse');
-const asyncHandler = require('../../middleware/async');
+import Profile from '../../models/Profile.js';
+import ErrorResponse from '../../utils/errorResponse.js';
+import asyncHandler from '../../middleware/async.js';
 
 // @desc    Get all profiles
 // @route   GET /api/v1/profiles
 // @access  Public
-exports.getProfiles = asyncHandler(async (req, res, next) => {
+export const getProfiles = asyncHandler(async (req, res, next) => {
   const profiles = await Profile.find().populate('user', 'name email');
   
   res.status(200).json({
@@ -18,7 +18,7 @@ exports.getProfiles = asyncHandler(async (req, res, next) => {
 // @desc    Get single profile
 // @route   GET /api/v1/profiles/:id
 // @access  Public
-exports.getProfile = asyncHandler(async (req, res, next) => {
+export const getProfile = asyncHandler(async (req, res, next) => {
   const profile = await Profile.findById(req.params.id).populate('user', 'name email');
 
   if (!profile) {
@@ -41,7 +41,7 @@ exports.getProfile = asyncHandler(async (req, res, next) => {
 // @desc    Create new profile
 // @route   POST /api/v1/profiles
 // @access  Private
-exports.createProfile = asyncHandler(async (req, res, next) => {
+export const createProfile = asyncHandler(async (req, res, next) => {
   // Add user to req.body
   req.body.user = req.user.id;
   
@@ -68,7 +68,7 @@ exports.createProfile = asyncHandler(async (req, res, next) => {
 // @desc    Update profile
 // @route   PUT /api/v1/profiles/:id
 // @access  Private
-exports.updateProfile = asyncHandler(async (req, res, next) => {
+export const updateProfile = asyncHandler(async (req, res, next) => {
   let profile = await Profile.findById(req.params.id);
 
   if (!profile) {
@@ -99,7 +99,7 @@ exports.updateProfile = asyncHandler(async (req, res, next) => {
 // @desc    Delete profile
 // @route   DELETE /api/v1/profiles/:id
 // @access  Private
-exports.deleteProfile = asyncHandler(async (req, res, next) => {
+export const deleteProfile = asyncHandler(async (req, res, next) => {
   const profile = await Profile.findById(req.params.id);
 
   if (!profile) {
@@ -127,7 +127,7 @@ exports.deleteProfile = asyncHandler(async (req, res, next) => {
 // @desc    Claim profile
 // @route   PUT /api/v1/profiles/:id/claim
 // @access  Private
-exports.claimProfile = asyncHandler(async (req, res, next) => {
+export const claimProfile = asyncHandler(async (req, res, next) => {
   const profile = await Profile.findById(req.params.id);
 
   if (!profile) {
@@ -155,7 +155,7 @@ exports.claimProfile = asyncHandler(async (req, res, next) => {
 // @desc    Get user profiles
 // @route   GET /api/v1/profiles/user/:userId
 // @access  Private
-exports.getUserProfiles = asyncHandler(async (req, res, next) => {
+export const getUserProfiles = asyncHandler(async (req, res, next) => {
   const profiles = await Profile.find({ user: req.params.userId });
 
   res.status(200).json({
@@ -168,7 +168,7 @@ exports.getUserProfiles = asyncHandler(async (req, res, next) => {
 // @desc    Get claimed profiles
 // @route   GET /api/v1/profiles/claimed
 // @access  Private
-exports.getClaimedProfiles = asyncHandler(async (req, res, next) => {
+export const getClaimedProfiles = asyncHandler(async (req, res, next) => {
   const profiles = await Profile.find({ claimedBy: req.user.id });
 
   res.status(200).json({

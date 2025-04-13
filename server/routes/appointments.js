@@ -4,7 +4,7 @@ import {
   getProfileAppointments,
   updateAppointment
 } from '../controllers/appointments.js';
-import { checkOwnership } from '../middleware/auth.js';
+import { checkGoogleOwnership } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -12,7 +12,7 @@ const router = express.Router();
 router.post('/', createAppointment);
 
 // Routes with ownership check
-router.post('/profile/:username', checkOwnership, getProfileAppointments);
-router.put('/:id', checkOwnership, updateAppointment);
+router.post('/profile/:username', checkGoogleOwnership, getProfileAppointments);
+router.put('/:id', checkGoogleOwnership, updateAppointment);
 
 export default router; 
