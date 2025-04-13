@@ -120,12 +120,14 @@ exports.claimProfile = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse(`Profile not found with id of ${req.params.id}`, 404));
   }
 
-  if (profile.isClaimed) {
-    return next(new ErrorResponse(`Profile is already claimed`, 400));
+  // Check if profile is already claimed
+  if (profile.claimedBy) {
+    return next(new ErrorResponse(`Profile is already claimed by user ${profile.claimedBy}`, 400));
   }
 
-  profile.isClaimed = true;
+  // Update profile with claimer
   profile.claimedBy = req.user.id;
+  profile.claimedAt = Date.now();
   await profile.save();
 
   res.status(200).json({

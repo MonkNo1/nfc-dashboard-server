@@ -5,17 +5,27 @@ import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import morgan from 'morgan';
+import session from 'express-session';
+import passport from './config/google-auth.js';
+import errorHandler from './middleware/error.js';
+import { verifyGoogleToken } from './middleware/auth.js';
+
+// Import routes
+import profileRoutes from './routes/profile.js';
+import appointmentRoutes from './routes/appointments.js';
+import authRoutes from './routes/auth.js';
+import slugRoutes from './routes/slug.js';
+import v1Routes from './routes/v1/index.js';
+import dashboardRoutes from './routes/dashboards.js';
 
 dotenv.config();
 
 // Models
 import './models/UserProfile.js';
 import './models/Appointment.js';
-
-// Routes
-import profileRoutes from './routes/profile.js';
-import appointmentRoutes from './routes/Appointment.js';
-import slugRoutes from './routes/slug.js';
+import './models/Profile.js';
+import './models/Dashboard.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -49,7 +59,24 @@ const corsOptions = {
 
 // Middleware
 app.use(cors(corsOptions));
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(morgan('dev'));
+
+// Session configuration
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'your-secret-key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
+
+// Initialize Passport
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Request logging middleware
 app.use((req, res, next) => {
@@ -78,11 +105,22 @@ mongoose.connect(process.env.MONGO_URI, {
 // Register routes
 app.use('/api/profile', profileRoutes);
 app.use('/api/appointments', appointmentRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/v1', v1Routes);
 app.use('/api/profiles', slugRoutes);
+app.use('/api/dashboards', dashboardRoutes);
+
+// Protected routes that require Google authentication
+app.use('/api/slugs', verifyGoogleToken, slugRoutes);
 
 // Health check
 app.get('/', (req, res) => {
-  res.send('🚀 API is working');
+  res.json({ 
+    message: 'Welcome to NFC Dashboard API',
+    status: 'running',
+    environment: process.env.NODE_ENV,
+    version: '1.0.0'
+  });
 });
 
 // 404 handler
@@ -91,13 +129,7 @@ app.use((req, res) => {
 });
 
 // Global error handler
-app.use((err, req, res, next) => {
-  console.error('Server error:', err.stack);
-  res.status(500).json({ 
-    error: 'Internal server error',
-    message: process.env.NODE_ENV === 'development' ? err.message : undefined
-  });
-});
+app.use(errorHandler);
 
 // Start server
 app.listen(PORT, () => {
