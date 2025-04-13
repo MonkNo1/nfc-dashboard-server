@@ -9,8 +9,12 @@ passport.serializeUser((user, done) => {
 passport.deserializeUser(async (id, done) => {
   try {
     const user = await UserProfile.findById(id);
+    if (!user) {
+      return done(new Error('User not found'), null);
+    }
     done(null, user);
   } catch (error) {
+    console.error('Deserialize user error:', error);
     done(error, null);
   }
 });
@@ -21,7 +25,8 @@ passport.use(
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       callbackURL: '/api/auth/google/callback',
-      scope: ['profile', 'email']
+      scope: ['profile', 'email'],
+      proxy: true
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -33,6 +38,7 @@ passport.use(
           user.email = profile.emails[0].value;
           user.name = profile.displayName;
           user.avatar = profile.photos[0].value;
+          user.lastLogin = new Date();
           await user.save();
           return done(null, user);
         }
@@ -43,11 +49,13 @@ passport.use(
           email: profile.emails[0].value,
           name: profile.displayName,
           avatar: profile.photos[0].value,
-          isOwner: true // This user can edit their profile
+          isOwner: true, // This user can edit their profile
+          lastLogin: new Date()
         });
 
         return done(null, user);
       } catch (error) {
+        console.error('Google strategy error:', error);
         return done(error, null);
       }
     }

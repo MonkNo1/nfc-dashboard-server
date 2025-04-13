@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const ProfileSchema = new mongoose.Schema({
   user: {
@@ -90,4 +90,4 @@ const ProfileSchema = new mongoose.Schema({
 // Prevent user from submitting more than one profile
 ProfileSchema.index({ user: 1 }, { unique: true });
 
-module.exports = mongoose.model('Profile', ProfileSchema); 
+export default mongoose.model('Profile', ProfileSchema); 

@@ -3,8 +3,10 @@ import express from 'express';
 import passport from 'passport';
 import UserProfile from '../models/UserProfile.js';
 import jwt from 'jsonwebtoken';
+import { OAuth2Client } from 'google-auth-library';
 
 const router = express.Router();
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 /**
  * @route   POST /api/auth/admin
@@ -80,7 +82,10 @@ router.get('/verify', (req, res) => {
 
 // Google OAuth routes
 router.get('/google',
-  passport.authenticate('google', { scope: ['profile', 'email'] })
+  passport.authenticate('google', { 
+    scope: ['profile', 'email'],
+    prompt: 'select_account'
+  })
 );
 
 router.get('/google/callback',
@@ -151,6 +156,9 @@ router.post('/google/verify', async (req, res) => {
     const ticket = await client.verifyIdToken({
       idToken: token,
       audience: process.env.GOOGLE_CLIENT_ID
+    }).catch(error => {
+      console.error('Google token verification failed:', error);
+      throw new Error('Invalid Google token');
     });
     
     const payload = ticket.getPayload();
@@ -169,7 +177,7 @@ router.post('/google/verify', async (req, res) => {
       });
     }
     
-    // Generate JWT token
+    // Generate JWT token with proper expiration
     const jwtToken = jwt.sign(
       { 
         id: userProfile._id,
@@ -196,7 +204,7 @@ router.post('/google/verify', async (req, res) => {
     console.error('Google token verification error:', error);
     res.status(401).json({ 
       success: false, 
-      message: 'Invalid token' 
+      message: error.message || 'Invalid token'
     });
   }
 });

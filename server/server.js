@@ -7,6 +7,8 @@ import passport from './config/google-auth.js';
 import connectDB from './config/db.js';
 import errorHandler from './middleware/error.js';
 import { verifyGoogleToken } from './middleware/auth.js';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 
 // Load environment variables
 dotenv.config();
@@ -17,11 +19,21 @@ connectDB();
 // Initialize Express app
 const app = express();
 
+// Security middleware
+app.use(helmet());
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100 // limit each IP to 100 requests per windowMs
+});
+app.use('/api/', limiter);
+
 // CORS configuration
 app.use(cors({
   origin: ['https://nfc-dashboard-five.vercel.app', 'http://localhost:3000'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'admin-token'],
   credentials: true
 }));
 
@@ -37,6 +49,7 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
   }
 }));

@@ -3,8 +3,8 @@ import mongoose from 'mongoose';
 const UserProfileSchema = new mongoose.Schema({
   slug: {
     type: String,
-    required: true,
     unique: true,
+    sparse: true, // Allows the field to be optional and non-conflicting
     trim: true,
     minlength: 16, // Ensure slug length
     maxlength: 16
@@ -50,7 +50,8 @@ const UserProfileSchema = new mongoose.Schema({
   ownerDeviceId: {
     type: String,
     default: null,  // This will be set on first tap
-    unique: true // Ensure device ID is unique
+    unique: true,
+    sparse: true // Allows the field to be optional and non-conflicting
   }
 }, {
   timestamps: true

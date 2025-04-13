@@ -1,8 +1,12 @@
-const jwt = require('jsonwebtoken');
-const UserProfile = require('../models/UserProfile');
+import jwt from 'jsonwebtoken';
+import { OAuth2Client } from 'google-auth-library';
+import UserProfile from '../models/UserProfile.js';
+
+// Initialize Google OAuth client
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Protect routes
-exports.protect = async (req, res, next) => {
+export const protect = async (req, res, next) => {
   let token;
 
   // Check if auth header exists and starts with Bearer
@@ -18,28 +22,45 @@ exports.protect = async (req, res, next) => {
   if (!token) {
     return res.status(401).json({
       success: false,
-      message: 'Not authorized to access this route',
+      message: 'Not authorized to access this route'
     });
   }
 
   try {
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
-    // Add user to request object
-    req.user = decoded;
-    
+
+    // Check token expiration
+    if (decoded.exp && Date.now() >= decoded.exp * 1000) {
+      return res.status(401).json({
+        success: false,
+        message: 'Token has expired'
+      });
+    }
+
+    // Get user from the token
+    const user = await UserProfile.findById(decoded.id);
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    req.user = user;
     next();
   } catch (err) {
+    console.error('Token verification error:', err);
     return res.status(401).json({
       success: false,
-      message: 'Not authorized to access this route',
+      message: err.name === 'TokenExpiredError' ? 'Token has expired' : 'Invalid token'
     });
   }
 };
 
 // Verify Google token
-exports.verifyGoogleToken = async (req, res, next) => {
+export const verifyGoogleToken = async (req, res, next) => {
   try {
     // Get the token from the Authorization header
     const authHeader = req.headers.authorization;
@@ -56,9 +77,20 @@ exports.verifyGoogleToken = async (req, res, next) => {
     const ticket = await client.verifyIdToken({
       idToken: token,
       audience: process.env.GOOGLE_CLIENT_ID
+    }).catch(error => {
+      console.error('Google token verification failed:', error);
+      throw new Error('Invalid Google token');
     });
     
     const payload = ticket.getPayload();
+    
+    // Check token expiration
+    if (payload.exp && Date.now() >= payload.exp * 1000) {
+      return res.status(401).json({
+        success: false,
+        message: 'Google token has expired'
+      });
+    }
     
     // Add user info to request
     req.user = {
@@ -73,13 +105,13 @@ exports.verifyGoogleToken = async (req, res, next) => {
     console.error('Google token verification error:', error);
     return res.status(401).json({ 
       success: false, 
-      message: 'Invalid token' 
+      message: error.message || 'Invalid token'
     });
   }
 };
 
 // Check ownership by Google ID
-exports.checkGoogleOwnership = async (req, res, next) => {
+export const checkGoogleOwnership = async (req, res, next) => {
   try {
     if (!req.user || !req.user.googleId) {
       return res.status(401).json({
@@ -101,16 +133,30 @@ exports.checkGoogleOwnership = async (req, res, next) => {
 };
 
 // Admin middleware
-exports.adminAuth = (req, res, next) => {
-  // For demo purposes, we're using a simple token check
-  const adminToken = req.headers['admin-token'];
-  
-  if (!adminToken || adminToken !== process.env.ADMIN_TOKEN) {
-    return res.status(403).json({
+export const adminAuth = (req, res, next) => {
+  try {
+    const adminToken = req.headers['admin-token'];
+    
+    if (!adminToken) {
+      return res.status(403).json({
+        success: false,
+        message: 'Admin token is required',
+      });
+    }
+    
+    if (adminToken !== process.env.ADMIN_TOKEN) {
+      return res.status(403).json({
+        success: false,
+        message: 'Invalid admin token',
+      });
+    }
+    
+    next();
+  } catch (error) {
+    console.error('Admin authentication error:', error);
+    return res.status(500).json({
       success: false,
-      message: 'Admin access required',
+      message: 'Server error during admin authentication',
     });
   }
-  
-  next();
 }; 

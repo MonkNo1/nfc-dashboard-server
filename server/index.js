@@ -106,14 +106,13 @@ mongoose.connect(process.env.MONGODB_URI, {
 });
 
 // Register routes
+app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/appointments', appointmentRoutes);
-app.use('/api/auth', authRoutes);
 app.use('/api/v1', v1Routes);
-app.use('/api/profiles', slugRoutes);
-app.use('/api/dashboards', dashboardRoutes);
 
 // Protected routes that require Google authentication
+app.use('/api/dashboards', verifyGoogleToken, dashboardRoutes);
 app.use('/api/slugs', verifyGoogleToken, slugRoutes);
 
 // Health check endpoint
