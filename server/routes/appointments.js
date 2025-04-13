@@ -1,10 +1,10 @@
-const express = require('express');
-const {
+import express from 'express';
+import {
   createAppointment,
   getProfileAppointments,
   updateAppointment
-} = require('../controllers/appointments');
-const { checkOwnership } = require('../middleware/auth');
+} from '../controllers/appointments.js';
+import { checkOwnership } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -15,4 +15,4 @@ router.post('/', createAppointment);
 router.post('/profile/:username', checkOwnership, getProfileAppointments);
 router.put('/:id', checkOwnership, updateAppointment);
 
-module.exports = router; 
+export default router; 

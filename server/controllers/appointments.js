@@ -1,10 +1,10 @@
-const Appointment = require('../models/Appointment');
-const Profile = require('../models/Profile');
+import Appointment from '../models/Appointment.js';
+import Profile from '../models/Profile.js';
 
 // @desc    Create a new appointment
 // @route   POST /api/appointments
 // @access  Public
-exports.createAppointment = async (req, res, next) => {
+export const createAppointment = async (req, res, next) => {
   try {
     const { name, email, date, time, username, profileName } = req.body;
     
@@ -57,7 +57,7 @@ exports.createAppointment = async (req, res, next) => {
 // @desc    Get all appointments for a profile
 // @route   GET /api/appointments/profile/:username
 // @access  Public (with device ownership check)
-exports.getProfileAppointments = async (req, res, next) => {
+export const getProfileAppointments = async (req, res, next) => {
   try {
     const { deviceId } = req.body;
     
@@ -102,7 +102,7 @@ exports.getProfileAppointments = async (req, res, next) => {
 // @desc    Update appointment status
 // @route   PUT /api/appointments/:id
 // @access  Public (with device ownership check)
-exports.updateAppointment = async (req, res, next) => {
+export const updateAppointment = async (req, res, next) => {
   try {
     const { status, deviceId } = req.body;
     
