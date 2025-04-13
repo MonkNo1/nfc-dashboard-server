@@ -32,33 +32,36 @@ const PORT = process.env.PORT || 5000;
 
 // Security headers middleware
 app.use((req, res, next) => {
-  // Remove sensitive headers
   res.removeHeader('X-Powered-By');
-  
-  // Add security headers
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-  
   next();
 });
 
 // CORS configuration
-const corsOptions = {
-  origin: process.env.NODE_ENV === 'production'
-    ? [
-        'https://nfc-dashboard-five.vercel.app',
-        process.env.FRONTEND_BASE_URL
-      ].filter(Boolean)
-    : '*',
+const allowedOrigins = [
+  'https://nfc-dashboard-five.vercel.app',
+  process.env.FRONTEND_BASE_URL
+].filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like curl or mobile apps)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'admin-token'],
   credentials: true
-};
+}));
 
 // Middleware
-app.use(cors(corsOptions));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(morgan('dev'));
@@ -84,14 +87,14 @@ app.use((req, res, next) => {
   next();
 });
 
-// Debug log (development only)
+// Debug logs (only in development)
 if (process.env.NODE_ENV !== 'production') {
-  console.log("Using MONGO_URI:", process.env.MONGO_URI ? "**configured**" : "**missing**");
+  console.log("Using MONGODB_URI:", process.env.MONGODB_URI ? "**configured**" : "**missing**");
   console.log("Using FRONTEND_BASE_URL:", process.env.FRONTEND_BASE_URL || "Not set");
 }
 
-// DB connection
-mongoose.connect(process.env.MONGO_URI, {
+// DB connection using correct env variable:
+mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   serverSelectionTimeoutMS: 10000
@@ -99,7 +102,7 @@ mongoose.connect(process.env.MONGO_URI, {
 .then(() => console.log("✅ MongoDB connected"))
 .catch(err => {
   console.error("❌ MongoDB connection error:", err.message);
-  process.exit(1); // Exit on DB connection failure
+  process.exit(1);
 });
 
 // Register routes
@@ -113,7 +116,7 @@ app.use('/api/dashboards', dashboardRoutes);
 // Protected routes that require Google authentication
 app.use('/api/slugs', verifyGoogleToken, slugRoutes);
 
-// Health check
+// Health check endpoint
 app.get('/', (req, res) => {
   res.json({ 
     message: 'Welcome to NFC Dashboard API',
