@@ -6,6 +6,11 @@ const ProfileSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+  googleId: {
+    type: String,
+    sparse: true,
+    unique: true
+  },
   name: {
     type: String,
     required: [true, 'Please add a name'],
@@ -60,6 +65,10 @@ const ProfileSchema = new mongoose.Schema({
   isPublic: {
     type: Boolean,
     default: true
+  },
+  isClaimed: {
+    type: Boolean,
+    default: false
   },
   claimedBy: {
     type: mongoose.Schema.ObjectId,

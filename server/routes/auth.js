@@ -2,6 +2,7 @@
 import express from 'express';
 import passport from 'passport';
 import UserProfile from '../models/UserProfile.js';
+import jwt from 'jsonwebtoken';
 
 const router = express.Router();
 
@@ -126,11 +127,77 @@ router.get('/can-edit/:profileId', async (req, res) => {
       return res.status(404).json({ error: 'Profile not found' });
     }
 
-    // User can edit if they are the owner
+    // User can edit if they are the owner (Google ID match)
     const canEdit = profile.googleId === req.user.googleId;
     res.json({ canEdit });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Google token verification endpoint
+router.post('/google/verify', async (req, res) => {
+  try {
+    const { token } = req.body;
+    
+    if (!token) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Token is required' 
+      });
+    }
+    
+    // Verify the token with Google
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID
+    });
+    
+    const payload = ticket.getPayload();
+    
+    // Check if user exists in our database
+    let userProfile = await UserProfile.findOne({ googleId: payload.sub });
+    
+    // If user doesn't exist, create a new one
+    if (!userProfile) {
+      userProfile = await UserProfile.create({
+        googleId: payload.sub,
+        name: payload.name,
+        email: payload.email,
+        avatar: payload.picture,
+        isOwner: true // First user to authenticate with this Google ID is the owner
+      });
+    }
+    
+    // Generate JWT token
+    const jwtToken = jwt.sign(
+      { 
+        id: userProfile._id,
+        googleId: userProfile.googleId,
+        email: userProfile.email
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '30d' }
+    );
+    
+    res.json({
+      success: true,
+      token: jwtToken,
+      user: {
+        id: userProfile._id,
+        googleId: userProfile.googleId,
+        name: userProfile.name,
+        email: userProfile.email,
+        avatar: userProfile.avatar,
+        isOwner: userProfile.isOwner
+      }
+    });
+  } catch (error) {
+    console.error('Google token verification error:', error);
+    res.status(401).json({ 
+      success: false, 
+      message: 'Invalid token' 
+    });
   }
 });
 
