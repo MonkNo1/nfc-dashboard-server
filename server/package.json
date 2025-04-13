@@ -1,6 +1,7 @@
 {
   "name": "nfc-dashboard-server",
   "version": "1.0.0",
+  "type": "module",
   "description": "Backend server for NFC Dashboard",
   "main": "index.js",
   "scripts": {
