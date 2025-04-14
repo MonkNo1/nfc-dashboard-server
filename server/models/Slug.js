@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const SlugSchema = new mongoose.Schema({
   slug: {
@@ -28,4 +28,4 @@ const SlugSchema = new mongoose.Schema({
   }
 });
 
-module.exports = mongoose.model('Slug', SlugSchema); 
+export default mongoose.model('Slug', SlugSchema); 

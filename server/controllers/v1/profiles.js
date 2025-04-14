@@ -1,6 +1,7 @@
 import Profile from '../../models/Profile.js';
 import ErrorResponse from '../../utils/errorResponse.js';
 import asyncHandler from '../../middleware/async.js';
+import UserProfile from '../../models/UserProfile.js';
 
 // @desc    Get all profiles
 // @route   GET /api/v1/profiles
@@ -149,6 +150,38 @@ export const claimProfile = asyncHandler(async (req, res, next) => {
   res.status(200).json({
     success: true,
     data: profile
+  });
+});
+
+// @desc    Claim profile by slug
+// @route   PATCH /api/v1/profiles/claim/:slug
+// @access  Private
+export const claimProfileBySlug = asyncHandler(async (req, res, next) => {
+  // Find the user profile by slug
+  const userProfile = await UserProfile.findOne({ slug: req.params.slug });
+
+  if (!userProfile) {
+    return next(new ErrorResponse(`Profile not found with slug ${req.params.slug}`, 404));
+  }
+
+  // Check if profile is already claimed
+  if (userProfile.isOwner) {
+    return next(new ErrorResponse(`Profile is already claimed by user ${userProfile.googleId}`, 400));
+  }
+
+  // Check if user has a Google ID
+  if (!req.user.googleId) {
+    return next(new ErrorResponse(`User must have a Google ID to claim a profile`, 400));
+  }
+
+  // Update profile with claimer
+  userProfile.isOwner = true;
+  userProfile.googleId = req.user.googleId; // Set the Google ID of the claimer
+  await userProfile.save();
+
+  res.status(200).json({
+    success: true,
+    data: userProfile
   });
 });
 

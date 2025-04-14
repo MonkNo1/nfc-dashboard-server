@@ -7,7 +7,8 @@ import {
   deleteProfile,
   claimProfile,
   getUserProfiles,
-  getClaimedProfiles
+  getClaimedProfiles,
+  claimProfileBySlug
 } from '../../controllers/v1/profiles.js';
 
 import { protect, authorize } from '../../middleware/auth.js';
@@ -28,6 +29,10 @@ router
 router
   .route('/:id/claim')
   .put(protect, claimProfile);
+
+router
+  .route('/claim/:slug')
+  .patch(protect, claimProfileBySlug);
 
 router
   .route('/user/:userId')
