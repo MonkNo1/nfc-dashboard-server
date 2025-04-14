@@ -173,12 +173,24 @@ router.post('/google/verify', async (req, res) => {
         name: payload.name,
         email: payload.email,
         avatar: payload.picture,
-        isOwner: false // Default to not owner until claimed
+        isOwner: true // First user to authenticate with this Google ID is the owner
       });
     }
     
+    // Generate JWT token with proper expiration
+    const jwtToken = jwt.sign(
+      { 
+        id: userProfile._id,
+        googleId: userProfile.googleId,
+        email: userProfile.email
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '30d' }
+    );
+    
     res.json({
       success: true,
+      token: jwtToken,
       user: {
         id: userProfile._id,
         googleId: userProfile.googleId,

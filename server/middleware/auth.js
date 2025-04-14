@@ -8,66 +8,18 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 // Protect routes
 export const protect = async (req, res, next) => {
   try {
-    // Get the token from the Authorization header
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ 
-        success: false, 
-        message: 'Not authorized to access this route' 
-      });
-    }
-
-    const token = authHeader.split(' ')[1];
-    
-    // Verify the token with Google
-    const ticket = await client.verifyIdToken({
-      idToken: token,
-      audience: process.env.GOOGLE_CLIENT_ID
-    }).catch(error => {
-      console.error('Google token verification failed:', error);
-      throw new Error('Invalid Google token');
-    });
-    
-    const payload = ticket.getPayload();
-    
-    // Check token expiration
-    if (payload.exp && Date.now() >= payload.exp * 1000) {
+    if (!req.user || !req.user.googleId) {
       return res.status(401).json({
         success: false,
-        message: 'Google token has expired'
+        message: 'Not authorized to access this route'
       });
     }
-    
-    // Find or create user profile
-    let userProfile = await UserProfile.findOne({ googleId: payload.sub });
-    
-    // If user doesn't exist, create a new one
-    if (!userProfile) {
-      userProfile = await UserProfile.create({
-        googleId: payload.sub,
-        name: payload.name,
-        email: payload.email,
-        avatar: payload.picture,
-        isOwner: false // Default to not owner until claimed
-      });
-    }
-    
-    // Add user info to request
-    req.user = {
-      id: userProfile._id,
-      googleId: userProfile.googleId,
-      email: userProfile.email,
-      name: userProfile.name,
-      avatar: userProfile.avatar,
-      isOwner: userProfile.isOwner
-    };
-    
     next();
   } catch (error) {
     console.error('Auth middleware error:', error);
-    return res.status(401).json({ 
-      success: false, 
-      message: error.message || 'Not authorized to access this route'
+    return res.status(500).json({
+      success: false,
+      message: 'Server error during authentication'
     });
   }
 };
@@ -148,21 +100,28 @@ export const checkGoogleOwnership = async (req, res, next) => {
 // Admin middleware
 export const adminAuth = (req, res, next) => {
   try {
-    const token = req.headers['admin-token'];
+    const adminToken = req.headers['admin-token'];
     
-    if (!token || token !== process.env.ADMIN_TOKEN) {
-      return res.status(401).json({
+    if (!adminToken) {
+      return res.status(403).json({
         success: false,
-        message: 'Not authorized as admin'
+        message: 'Admin token is required',
+      });
+    }
+    
+    if (adminToken !== process.env.ADMIN_TOKEN) {
+      return res.status(403).json({
+        success: false,
+        message: 'Invalid admin token',
       });
     }
     
     next();
   } catch (error) {
-    console.error('Admin auth error:', error);
+    console.error('Admin authentication error:', error);
     return res.status(500).json({
       success: false,
-      message: 'Server error during admin authentication'
+      message: 'Server error during admin authentication',
     });
   }
 }; 
