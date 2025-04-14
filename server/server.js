@@ -62,6 +62,7 @@ app.use(passport.session());
 app.use('/api/profile', import('./routes/profile.js'));
 app.use('/api/appointments', import('./routes/appointments.js'));
 app.use('/api/auth', import('./routes/auth.js'));
+app.use('/api/nfc-links', import('./routes/nfcLinks.js'));
 
 // Protected routes that require Google authentication
 app.use('/api/slugs', verifyGoogleToken, import('./routes/slug.js'));

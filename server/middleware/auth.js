@@ -7,54 +7,19 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Protect routes
 export const protect = async (req, res, next) => {
-  let token;
-
-  // Check if auth header exists and starts with Bearer
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
-  ) {
-    // Extract token from Bearer token
-    token = req.headers.authorization.split(' ')[1];
-  }
-
-  // Make sure token exists
-  if (!token) {
-    return res.status(401).json({
-      success: false,
-      message: 'Not authorized to access this route'
-    });
-  }
-
   try {
-    // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // Check token expiration
-    if (decoded.exp && Date.now() >= decoded.exp * 1000) {
+    if (!req.user || !req.user.googleId) {
       return res.status(401).json({
         success: false,
-        message: 'Token has expired'
+        message: 'Not authorized to access this route'
       });
     }
-
-    // Get user from the token
-    const user = await UserProfile.findById(decoded.id);
-
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
-
-    req.user = user;
     next();
-  } catch (err) {
-    console.error('Token verification error:', err);
-    return res.status(401).json({
+  } catch (error) {
+    console.error('Auth middleware error:', error);
+    return res.status(500).json({
       success: false,
-      message: err.name === 'TokenExpiredError' ? 'Token has expired' : 'Invalid token'
+      message: 'Server error during authentication'
     });
   }
 };
@@ -116,7 +81,7 @@ export const checkGoogleOwnership = async (req, res, next) => {
     if (!req.user || !req.user.googleId) {
       return res.status(401).json({
         success: false,
-        message: 'Not authorized - Google ID required',
+        message: 'Not authorized - Google ID required'
       });
     }
     
@@ -127,7 +92,7 @@ export const checkGoogleOwnership = async (req, res, next) => {
     console.error('Ownership check error:', error);
     return res.status(500).json({
       success: false,
-      message: 'Server error during ownership check',
+      message: 'Server error during ownership check'
     });
   }
 };
