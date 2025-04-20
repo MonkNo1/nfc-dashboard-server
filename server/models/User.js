@@ -16,13 +16,19 @@ const UserSchema = new mongoose.Schema({
   },
   googleId: {
     type: String,
-    sparse: true,
-    unique: true
+    unique: true,
+    sparse: true
   },
-  role: {
-    type: String,
-    enum: ['user', 'admin'],
-    default: 'user'
+  image: {
+    type: String
+  },
+  isAdmin: {
+    type: Boolean,
+    default: false
+  },
+  isOwner: {
+    type: Boolean,
+    default: false
   },
   createdAt: {
     type: Date,
