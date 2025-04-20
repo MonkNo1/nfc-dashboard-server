@@ -124,4 +124,34 @@ export const adminAuth = (req, res, next) => {
       message: 'Server error during admin authentication',
     });
   }
+};
+
+// Check if user is admin
+export const isAdmin = async (req, res, next) => {
+  try {
+    if (!req.user || !req.user.googleId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Not authorized to access this route'
+      });
+    }
+    
+    // Find user by Google ID
+    const user = await UserProfile.findOne({ googleId: req.user.googleId });
+    
+    if (!user || !user.isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized as admin'
+      });
+    }
+    
+    next();
+  } catch (error) {
+    console.error('Admin check error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error during admin check'
+    });
+  }
 }; 
