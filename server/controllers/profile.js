@@ -1,6 +1,6 @@
 import Profile from '../models/Profile.js';
 import User from '../models/User.js';
-import ErrorResponse from '../utils/errorResponse.js';
+import { ErrorResponse } from '../utils/errorResponse.js';
 import asyncHandler from '../middleware/async.js';
 
 // @desc    Get all profiles
