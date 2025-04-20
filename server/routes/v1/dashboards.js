@@ -1,13 +1,13 @@
 import express from 'express';
-import { isAuthenticated } from '../../middleware/auth.js';
+import { protect } from '../../middleware/auth.js';
 import Dashboard from '../../models/Dashboard.js';
 
 const router = express.Router();
 
 // Get all dashboards for the authenticated user
-router.get('/', isAuthenticated, async (req, res) => {
+router.get('/', protect, async (req, res) => {
   try {
-    const dashboards = await Dashboard.find({ user: req.user._id });
+    const dashboards = await Dashboard.find({ user: req.user.googleId });
     res.json(dashboards);
   } catch (error) {
     console.error('Get dashboards error:', error);
@@ -16,11 +16,11 @@ router.get('/', isAuthenticated, async (req, res) => {
 });
 
 // Get a specific dashboard by ID
-router.get('/:id', isAuthenticated, async (req, res) => {
+router.get('/:id', protect, async (req, res) => {
   try {
     const dashboard = await Dashboard.findOne({
       _id: req.params.id,
-      user: req.user._id
+      user: req.user.googleId
     });
     
     if (!dashboard) {
@@ -35,7 +35,7 @@ router.get('/:id', isAuthenticated, async (req, res) => {
 });
 
 // Create a new dashboard
-router.post('/', isAuthenticated, async (req, res) => {
+router.post('/', protect, async (req, res) => {
   try {
     const { name, description } = req.body;
     
@@ -46,7 +46,7 @@ router.post('/', isAuthenticated, async (req, res) => {
     const dashboard = new Dashboard({
       name,
       description,
-      user: req.user._id
+      user: req.user.googleId
     });
     
     await dashboard.save();
@@ -58,12 +58,12 @@ router.post('/', isAuthenticated, async (req, res) => {
 });
 
 // Update a dashboard
-router.put('/:id', isAuthenticated, async (req, res) => {
+router.put('/:id', protect, async (req, res) => {
   try {
     const { name, description } = req.body;
     const dashboard = await Dashboard.findOne({
       _id: req.params.id,
-      user: req.user._id
+      user: req.user.googleId
     });
     
     if (!dashboard) {
@@ -82,11 +82,11 @@ router.put('/:id', isAuthenticated, async (req, res) => {
 });
 
 // Delete a dashboard
-router.delete('/:id', isAuthenticated, async (req, res) => {
+router.delete('/:id', protect, async (req, res) => {
   try {
     const dashboard = await Dashboard.findOne({
       _id: req.params.id,
-      user: req.user._id
+      user: req.user.googleId
     });
     
     if (!dashboard) {

@@ -110,9 +110,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/v1', v1Routes);
-
-// Protected routes that require Google authentication
-app.use('/api/dashboards', verifyGoogleToken, dashboardRoutes);
+app.use('/api/dashboards', dashboardRoutes);
 app.use('/api/slugs', verifyGoogleToken, slugRoutes);
 
 // Health check endpoint
