@@ -2,6 +2,11 @@ import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import UserProfile from '../models/UserProfile.js';
 
+// Debug logging
+console.log('Google Auth Config - Environment Variables:');
+console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID ? 'Set' : 'Not Set');
+console.log('GOOGLE_CLIENT_SECRET:', process.env.GOOGLE_CLIENT_SECRET ? 'Set' : 'Not Set');
+
 passport.serializeUser((user, done) => {
   done(null, user.id);
 });

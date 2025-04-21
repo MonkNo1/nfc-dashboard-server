@@ -7,6 +7,10 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import morgan from 'morgan';
 import session from 'express-session';
+
+// Load environment variables before importing auth configuration
+dotenv.config();
+
 import passport from './config/google-auth.js';
 import errorHandler from './middleware/error.js';
 import { verifyGoogleToken } from './middleware/auth.js';
@@ -18,8 +22,6 @@ import authRoutes from './routes/auth.js';
 import slugRoutes from './routes/slug.js';
 import v1Routes from './routes/v1/index.js';
 import dashboardRoutes from './routes/dashboards.js';
-
-dotenv.config();
 
 // Models
 import './models/UserProfile.js';
