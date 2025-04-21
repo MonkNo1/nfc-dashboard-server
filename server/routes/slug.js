@@ -8,10 +8,10 @@ const router = express.Router();
 // Utility to generate a random 16-character slug (8 bytes → 16 hex characters)
 const generateRandomSlug = () => crypto.randomBytes(8).toString('hex').toLowerCase();
 
-// Create a new profile with unique slug only when creating a dashboard
-router.post('/create-dashboard', async (req, res) => {
+// Create a new profile with unique slug
+router.post('/', async (req, res) => {
   try {
-    let slug;
+    let slug = '';
     let attempts = 0;
     const maxAttempts = 10;
     
@@ -41,9 +41,9 @@ router.post('/create-dashboard', async (req, res) => {
     // Create new profile with the authenticated user's email
     const profile = new UserProfile({
       slug,
-      email: req.user.email, // Use the authenticated user's email
+      email: req.user?.email || '', // Use the authenticated user's email
       isOwner: true, // Set ownership to true since this is a new profile
-      username: req.body.username || null, // Allow user to set a username
+      username: null, // default empty
       ownerDeviceId: null // will be claimed on first access
     });
 
@@ -54,7 +54,7 @@ router.post('/create-dashboard', async (req, res) => {
         console.warn(`Slug collision at save time: ${slug}`);
         return res.status(409).json({ error: 'Slug already exists. Please try again.' });
       }
-      console.error("Error saving slug profile:", error.message);
+      console.error("Error saving slug profile:", error.message || 'Unknown error');
       return res.status(500).json({ error: 'Internal server error' });
     }
 
@@ -63,7 +63,7 @@ router.post('/create-dashboard', async (req, res) => {
       link: `${baseUrl}/p/${slug}`
     });
   } catch (error) {
-    console.error("Slug generation error:", error.message);
+    console.error("Slug generation error:", error.message || 'Unknown error');
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -90,7 +90,7 @@ router.get('/:slug', async (req, res) => {
     
     res.json(profile);
   } catch (error) {
-    console.error("Error fetching profile:", error.message);
+    console.error("Error fetching profile:", error.message || 'Unknown error');
     res.status(500).json({ error: 'Internal server error' });
   }
 });

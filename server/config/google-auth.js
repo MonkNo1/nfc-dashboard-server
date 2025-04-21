@@ -9,12 +9,8 @@ passport.serializeUser((user, done) => {
 passport.deserializeUser(async (id, done) => {
   try {
     const user = await UserProfile.findById(id);
-    if (!user) {
-      return done(new Error('User not found'), null);
-    }
     done(null, user);
   } catch (error) {
-    console.error('Deserialize user error:', error);
     done(error, null);
   }
 });
@@ -22,11 +18,10 @@ passport.deserializeUser(async (id, done) => {
 passport.use(
   new GoogleStrategy(
     {
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      clientID: process.env.GOOGLE_CLIENT_ID || '',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
       callbackURL: '/api/auth/google/callback',
-      scope: ['profile', 'email'],
-      proxy: true
+      scope: ['profile', 'email']
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -35,10 +30,9 @@ passport.use(
 
         if (user) {
           // Update user's Google profile info
-          user.email = profile.emails[0].value;
-          user.name = profile.displayName;
-          user.avatar = profile.photos[0].value;
-          user.lastLogin = new Date();
+          user.email = profile.emails?.[0]?.value || '';
+          user.name = profile.displayName || '';
+          user.avatar = profile.photos?.[0]?.value || '';
           await user.save();
           return done(null, user);
         }
@@ -46,16 +40,15 @@ passport.use(
         // Create new user if doesn't exist
         user = await UserProfile.create({
           googleId: profile.id,
-          email: profile.emails[0].value,
-          name: profile.displayName,
-          avatar: profile.photos[0].value,
+          email: profile.emails?.[0]?.value || '',
+          name: profile.displayName || '',
+          avatar: profile.photos?.[0]?.value || '',
           isOwner: true, // This user can edit their profile
-          lastLogin: new Date()
+          slug: '' // This will be generated when the user creates a profile
         });
 
         return done(null, user);
       } catch (error) {
-        console.error('Google strategy error:', error);
         return done(error, null);
       }
     }
