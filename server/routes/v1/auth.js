@@ -46,7 +46,7 @@ router.post('/google', async (req, res) => {
         email: user.email,
         isAdmin: user.isAdmin
       },
-      process.env.JWT_SECRET,
+      process.env.JWT_SECRET || 'fallback-secret-key',
       { expiresIn: '7d' }
     );
 
@@ -71,7 +71,7 @@ router.get('/verify', async (req, res) => {
       return res.status(401).json({ error: 'No token provided' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret-key');
     const user = await User.findById(decoded.userId);
     
     if (!user) {

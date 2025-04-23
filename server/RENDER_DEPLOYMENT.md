@@ -34,11 +34,7 @@ Add the following environment variables under the "Environment" section:
 NODE_ENV=production
 MONGODB_URI=mongodb+srv://your_username:your_password@your_cluster.mongodb.net/nfc-dashboard
 JWT_SECRET=your_jwt_secret_key_change_this_in_production
-JWT_EXPIRES_IN=7d
-SESSION_SECRET=your_session_secret_key
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-FRONTEND_BASE_URL=https://your-frontend-url.vercel.app
+JWT_EXPIRE=30d
 ADMIN_PASSWORD=your_admin_password
 ADMIN_TOKEN=your_admin_token
 ```
